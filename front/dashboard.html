@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard - Veterinaria</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Opcional, para que las imágenes no sean gigantes */
+    .pet-image {
+      max-width: 150px;
+      max-height: 150px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Panel de gestión - Veterinaria 🐾</h1>
+
+  <button id="logout-btn">Cerrar sesión</button>
+
+  <h2>Registrar Mascota</h2>
+  <form id="mascota-form" enctype="multipart/form-data">
+    <input type="text" id="nombre-mascota" placeholder="Nombre Mascota" required />
+    <input type="text" id="raza" placeholder="Raza" required />
+    <input type="number" id="edad" placeholder="Edad" required />
+    <!-- Input para subir imagen -->
+    <input type="file" id="imagen-mascota" accept="image/*" />
+    <button type="submit">Agregar Mascota</button>
+  </form>
+
+  <h2>Lista de mascotas</h2>
+
+  <input type="text" id="search" placeholder="Buscar mascota por nombre" />
+  <button onclick="searchPets()">Buscar</button>
+
+  <div id="petsList"></div>
+
+<script>
+  async function searchPets() {
+    const name = document.getElementById('search').value;
+    const res = await fetch(`/api/pets?name=${encodeURIComponent(name)}`);
+    const pets = await res.json();
+
+    const listDiv = document.getElementById('petsList');
+    listDiv.innerHTML = pets.map(pet => `
+      <div>
+        <h3>${pet.name}</h3>
+        <img class="pet-image" src="${pet.imageUrl || 'default-pet.png'}" alt="${pet.name}" />
+        <p>Especie: ${pet.species || '-'}</p>
+        <p>Raza: ${pet.breed || '-'}</p>
+      </div>
+    `).join('');
+  }
+
+  // Agregar manejo para el submit del form con subida de imagen (simplificado)
+  document.getElementById('mascota-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('name', document.getElementById('nombre-mascota').value);
+    formData.append('breed', document.getElementById('raza').value);
+    formData.append('age', document.getElementById('edad').value);
+
+    const imageFile = document.getElementById('imagen-mascota').files[0];
+    if(imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    // Aquí debés tener un endpoint POST que acepte formData y procese la imagen
+    const res = await fetch('/api/pets', {
+      method: 'POST',
+      body: formData
+    });
+
+    if(res.ok) {
+      alert('Mascota agregada!');
+      e.target.reset();
+      searchPets(); // refrescar la lista
+    } else {
+      alert('Error al agregar mascota');
+    }
+  });
+</script>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
